@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Pensión IMSS Ley 73 + Modalidad 40</title>
+<style>
+  :root{
+    color-scheme: light;
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --gridline:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; /* blue: sin Modalidad 40 */
+    --series-2:#eb6834; /* orange: con Modalidad 40 */
+    --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--page); color:var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height:1.45;
+  }
+  header{
+    padding:28px 24px 20px; max-width:1200px; margin:0 auto;
+  }
+  header h1{font-size:1.5rem; margin:0 0 6px;}
+  header p{color:var(--text-secondary); margin:0; max-width:760px; font-size:.95rem;}
+  .wrap{max-width:1200px; margin:0 auto; padding:0 24px 60px; display:grid; grid-template-columns: 1fr; gap:20px;}
+  @media (min-width:980px){ .wrap{grid-template-columns: 420px 1fr;} }
+
+  .card{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px 20px 22px;
+  }
+  .card + .card{margin-top:20px;}
+  .card h2{font-size:1.05rem; margin:0 0 4px;}
+  .card .sub{color:var(--text-secondary); font-size:.85rem; margin:0 0 16px;}
+
+  fieldset{border:none; padding:0; margin:0 0 18px;}
+  fieldset legend{font-size:.8rem; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.03em; margin-bottom:10px; padding:0;}
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:.85rem; color:var(--text-primary); margin-bottom:4px;}
+  .field .hint{display:block; font-size:.75rem; color:var(--text-muted); margin-top:3px;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  input[type=number], input[type=date], select{
+    width:100%; padding:8px 10px; border:1px solid var(--baseline); border-radius:6px;
+    font-size:.9rem; background:#fff; color:var(--text-primary); font-variant-numeric: tabular-nums;
+  }
+  input:focus, select:focus{outline:2px solid var(--series-1); outline-offset:1px;}
+  .checkline{display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .checkline input{width:auto;}
+  .checkline label{font-size:.9rem; font-weight:600;}
+
+  details{border-top:1px solid var(--gridline); padding-top:12px; margin-top:6px;}
+  details summary{cursor:pointer; font-size:.85rem; font-weight:600; color:var(--series-1); list-style:none;}
+  details summary::-webkit-details-marker{display:none;}
+  details summary:before{content:"▸ "; }
+  details[open] summary:before{content:"▾ "; }
+  details .field{margin-top:12px;}
+
+  button.primary{
+    width:100%; padding:12px; border:none; border-radius:8px; background:var(--series-1);
+    color:#fff; font-size:.95rem; font-weight:600; cursor:pointer; margin-top:4px;
+  }
+  button.primary:hover{background:#1c5cab;}
+
+  .disclaimer{font-size:.75rem; color:var(--text-muted); border-top:1px solid var(--gridline); margin-top:16px; padding-top:12px;}
+
+  /* Results */
+  .stat-row{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;}
+  .stat-tile{border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; background:var(--surface-1);}
+  .stat-tile .label{font-size:.78rem; color:var(--text-secondary); margin-bottom:4px;}
+  .stat-tile .value{font-size:1.6rem; font-weight:700; font-variant-numeric: tabular-nums;}
+  .stat-tile.accent .value{color:var(--series-2);}
+  .stat-tile .delta{font-size:.8rem; margin-top:4px; color:var(--good); font-weight:600;}
+
+  .chart-wrap{margin:20px 0 24px;}
+  .bars{display:flex; align-items:flex-end; gap:36px; height:200px; padding:0 8px; border-bottom:1px solid var(--baseline);}
+  .bar-col{display:flex; flex-direction:column; align-items:center; justify-content:flex-end; flex:1; height:100%;}
+  .bar-col .amount{font-size:.85rem; font-weight:700; margin-bottom:6px; font-variant-numeric: tabular-nums;}
+  .bar{width:64px; border-radius:4px 4px 0 0; transition:height .3s ease;}
+  .bar-col .cat-label{margin-top:8px; font-size:.8rem; color:var(--text-secondary); text-align:center;}
+
+  table.breakdown{width:100%; border-collapse:collapse; font-size:.85rem; margin-top:6px;}
+  table.breakdown th{text-align:left; color:var(--text-muted); font-weight:600; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; padding:6px 8px; border-bottom:1px solid var(--gridline);}
+  table.breakdown td{padding:7px 8px; border-bottom:1px solid var(--gridline); font-variant-numeric: tabular-nums;}
+  table.breakdown td.num{text-align:right;}
+  table.breakdown tr.total td{font-weight:700; border-top:2px solid var(--baseline); border-bottom:none;}
+  table.breakdown tr.positive td.num{color:var(--good);}
+  table.breakdown tr.negative td.num{color:var(--critical);}
+
+  .note{font-size:.78rem; color:var(--text-muted); margin-top:10px;}
+  .section-title{font-size:.95rem; font-weight:700; margin:22px 0 8px;}
+  .section-title:first-child{margin-top:0;}
+  .placeholder{color:var(--text-muted); font-size:.9rem; padding:40px 0; text-align:center;}
+  .badge{display:inline-block; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px; background:#fdecea; color:var(--critical); margin-left:6px;}
+
+  @media print{
+    body{background:#fff;}
+    header{display:none;}
+    #panelEntradas{display:none !important;}
+    .wrap{display:block; padding:0; max-width:100%;}
+    .card{border:none; padding:0; box-shadow:none;}
+    #printHeader{display:block !important;}
+    #resultsToolbar{display:none !important;}
+    details summary{display:none;}
+    .chart-wrap{page-break-inside:avoid;}
+    table.breakdown{page-break-inside:avoid;}
+    .stat-tile{border:1px solid #ccc;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Simulador de Pensión IMSS &mdash; Ley 73 y Modalidad 40</h1>
+  <p>Estima tu pensión mensual bajo la Ley del Seguro Social de 1973, compara el escenario actual contra una estrategia de Modalidad&nbsp;40, y explora (opcionalmente) un esquema de financiamiento para pagarla. Los resultados son una <strong>estimación educativa</strong>, no un cálculo oficial del IMSS.</p>
+</header>
+
+<div class="wrap">
+
+  <!-- INPUT PANEL -->
+  <div id="panelEntradas">
+    <div class="card">
+      <h2>Datos del asegurado</h2>
+      <p class="sub">Captura la información base para calcular la pensión.</p>
+
+      <div class="field">
+        <label for="nombreCliente">Nombre completo (para el PDF)</label>
+        <input type="text" id="nombreCliente" placeholder="Ej. Rodolfo Fierro Casañas">
+        <span class="hint">Aparecerá en el encabezado al descargar tu simulación en PDF, para que cada persona tenga su propio archivo.</span>
+      </div>
+
+      <fieldset>
+        <legend>Situación actual</legend>
+        <div class="row2">
+          <div class="field">
+            <label for="edad">Edad al pensionarte (años)</label>
+            <input type="number" id="edad" min="50" max="70" step="1" value="61">
+            <span class="hint">Misma edad para ambos escenarios: con Modalidad 40 solo cambian tus semanas y tu salario promedio, no tu fecha de pensión.</span>
+          </div>
+          <div class="field">
+            <label for="semanas">Semanas cotizadas SIN Modalidad 40</label>
+            <input type="number" id="semanas" min="0" step="1" value="1221">
+            <span class="hint">Proyectadas a la fecha de pensión, sin contar semanas adicionales de Modalidad 40.</span>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="salarioActual">Salario diario actual (SBC $)</label>
+            <input type="number" id="salarioActual" min="0" step="0.01" value="150">
+          </div>
+          <div class="field">
+            <label for="salarioPromedio">Prom. real últimas 250 sem. ($, opcional)</label>
+            <input type="number" id="salarioPromedio" min="0" step="0.01" placeholder="= salario actual">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="conyuge">Cónyuge dependiente</label>
+            <select id="conyuge"><option value="no">No</option><option value="si">Sí</option></select>
+          </div>
+          <div class="field">
+            <label for="hijos">Hijos dependientes (&lt;16 o &lt;25 si estudian)</label>
+            <select id="hijos"><option value="0">0</option><option value="1">1</option><option value="2">2 o más</option></select>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="checkline">
+        <input type="checkbox" id="activarM40" checked>
+        <label for="activarM40">Simular estrategia de Modalidad 40</label>
+      </div>
+      <fieldset id="m40fields">
+        <div class="row2">
+          <div class="field">
+            <label for="salarioM40">Salario diario a declarar en Modalidad 40 ($)</label>
+            <input type="number" id="salarioM40" min="0" step="0.01" value="1450">
+          </div>
+          <div class="field">
+            <label for="mesesM40">Meses pagando Modalidad 40</label>
+            <input type="number" id="mesesM40" min="1" max="60" step="1" value="29">
+          </div>
+        </div>
+        <div class="field">
+          <span class="hint">Semanas adicionales que sumará Modalidad 40: <strong id="edadM40out">—</strong> · Tope legal: 25 UMA/día (<span id="topeUMAout">—</span>)</span>
+        </div>
+        <div class="field">
+          <label for="salarioPromedioM40">Salario promedio esperado CON Modalidad 40 ($/día, opcional)</label>
+          <input type="number" id="salarioPromedioM40" min="0" step="0.01" placeholder="se estima automáticamente">
+          <span class="hint">Si tu asesor o el IMSS ya te dieron una estimación de tu salario promedio de las últimas 250 semanas, captúrala aquí. Si lo dejas vacío, el simulador la estima con un promedio ponderado simple entre tu salario actual y el declarado en Modalidad&nbsp;40 — el IMSS puede ponderar distinto (por indexación de salarios antiguos), así que trátalo como punto de partida.</span>
+        </div>
+      </fieldset>
+
+      <details id="avanzado">
+        <summary>Parámetros de cálculo (avanzado)</summary>
+        <div class="row2">
+          <div class="field">
+            <label for="uma">UMA diaria vigente ($)</label>
+            <input type="number" id="uma" min="1" step="0.01" value="117.31">
+          </div>
+          <div class="field">
+            <label for="pmg">Pensión mínima garantizada ($/mes)</label>
+            <input type="number" id="pmg" min="0" step="0.01" value="10636.54">
+          </div>
+        </div>
+        <div class="field">
+          <label for="cuotaM40">Cuota Modalidad 40 (% del salario declarado)</label>
+          <input type="number" id="cuotaM40" min="0" step="0.001" value="14.438">
+          <span class="hint">⚠️ Esta tasa NO viene de una fuente oficial del IMSS, es una referencia de terceros y el IMSS la sube cada año. Antes de usar el simulador para una cotización real, confírmala con tu línea de captura o con tu asesor.</span>
+        </div>
+        <p class="note" style="margin-top:14px; border-top:1px solid var(--gridline); padding-top:10px;">
+          UMA diaria y Pensión Mínima Garantizada verificadas contra fuentes públicas en agosto 2026 (UMA vigente desde el 1&nbsp;feb&nbsp;2026 según INEGI). Estos valores cambian cada año — la UMA en febrero, la pensión mínima suele ajustarse junto con el salario mínimo en enero. Revisa y actualiza estos campos cuando los uses más adelante.
+        </p>
+      </details>
+
+      <button class="primary" onclick="calcular()">Calcular pensión</button>
+      <p class="disclaimer">Fórmula basada en el Art. 167 de la Ley del Seguro Social de 1973 (cuantía básica + incrementos por año cotizado, factor por edad, asignaciones familiares, incremento del 11% del decreto de 2001, y pensión mínima garantizada). Es una estimación: el monto real lo determina el IMSS al momento de tu trámite.</p>
+    </div>
+
+    <div class="card">
+      <div class="checkline" style="margin-bottom:6px;">
+        <input type="checkbox" id="activarFin">
+        <label for="activarFin">Simular esquema de financiamiento</label>
+      </div>
+      <p class="sub">Para pagar Modalidad 40 y honorarios de asesoría con un préstamo, liquidable con el retroactivo del AFORE y descuento de la nueva pensión. <strong>Todas las tasas son parámetros editables</strong> — ajústalas a las condiciones reales de tu asesor o institución financiera antes de compartir un resultado.</p>
+
+      <fieldset id="finfields" disabled>
+        <legend>Costos de la estrategia</legend>
+        <div class="field">
+          <label for="semanasDescontadas">Pago por semanas descontadas / recuperación ($)</label>
+          <input type="number" id="semanasDescontadas" min="0" step="0.01" value="0">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="pctRiesgo">Análisis de riesgo (monto fijo $)</label>
+            <input type="number" id="pctRiesgo" min="0" step="0.01" value="1850">
+          </div>
+          <div class="field">
+            <label for="pctSeguro">Seguro del proyecto (% del préstamo)</label>
+            <input type="number" id="pctSeguro" min="0" step="0.01" value="1.8">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="pctInteres">Interés financiado (% del préstamo)</label>
+            <input type="number" id="pctInteres" min="0" step="0.01" value="54">
+          </div>
+          <div class="field">
+            <label for="honorarioMeses">Honorarios (× pensión mejorada)</label>
+            <input type="number" id="honorarioMeses" min="0" step="0.1" value="1">
+          </div>
+        </div>
+        <legend style="margin-top:14px;">Recursos con los que se liquida</legend>
+        <div class="row2">
+          <div class="field">
+            <label for="montoAfore">Saldo actual en AFORE ($)</label>
+            <input type="number" id="montoAfore" min="0" step="0.01" value="300000">
+          </div>
+          <div class="field">
+            <label for="mesesRetro">Meses de pensión retroactiva</label>
+            <input type="number" id="mesesRetro" min="0" step="0.1" value="13.6">
+          </div>
+        </div>
+        <div class="field">
+          <label for="mesesDescNomina">Plazo del financiamiento externo (meses)</label>
+          <input type="number" id="mesesDescNomina" min="1" step="1" value="60">
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+  <!-- RESULTS PANEL -->
+  <div class="card" id="resultados">
+    <div class="placeholder">Ajusta los datos y presiona <strong>Calcular pensión</strong> para ver la proyección.</div>
+  </div>
+
+</div>
+
+<script>
+// ---------- Tabla oficial Art. 167 LSS 1973 (cuantía básica + incremento anual, por veces UMA) ----------
+const TABLA_167 = [
+  {max:1.00, cb:80.00, inc:0.563},
+  {max:1.25, cb:77.11, inc:0.814},
+  {max:1.50, cb:58.18, inc:1.178},
+  {max:1.75, cb:49.23, inc:1.430},
+  {max:2.00, cb:42.67, inc:1.615},
+  {max:2.25, cb:37.65, inc:1.756},
+  {max:2.50, cb:33.68, inc:1.868},
+  {max:2.75, cb:30.48, inc:1.958},
+  {max:3.00, cb:27.83, inc:2.033},
+  {max:3.25, cb:25.60, inc:2.096},
+  {max:3.50, cb:23.70, inc:2.149},
+  {max:3.75, cb:22.07, inc:2.195},
+  {max:4.00, cb:20.65, inc:2.235},
+  {max:4.25, cb:19.39, inc:2.271},
+  {max:4.50, cb:18.29, inc:2.302},
+  {max:4.75, cb:17.30, inc:2.330},
+  {max:5.00, cb:16.41, inc:2.355},
+  {max:5.25, cb:15.61, inc:2.377},
+  {max:5.50, cb:14.88, inc:2.398},
+  {max:5.75, cb:14.22, inc:2.416},
+  {max:6.00, cb:13.62, inc:2.433},
+  {max:Infinity, cb:13.00, inc:2.450},
+];
+const FACTOR_EDAD = {60:75,61:80,62:85,63:90,64:95,65:100};
+const DIAS_MES = 30.4;
+const SEMANAS_VENTANA = 250; // últimas 250 semanas para salario promedio
+const SEMANAS_MIN = 500;     // semanas base para cuantía básica (régimen original Ley 73)
+
+function fmt(n){
+  return '$' + (isFinite(n)?n:0).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtPct(n){ return n.toFixed(2)+'%'; }
+
+function bracketFor(vecesUMA){
+  return TABLA_167.find(b => vecesUMA <= b.max);
+}
+
+function factorEdad(edad){
+  if(edad >= 65) return 100;
+  if(edad < 60) return null;
+  return FACTOR_EDAD[Math.floor(edad)] ?? null;
+}
+
+// Calcula la pensión mensual dado semanas totales, salario promedio diario, edad y dependientes
+function calcularPension(semanasTotales, salarioPromedioDiario, edad, conyuge, hijos, uma, pmg){
+  const salarioTopado = Math.min(salarioPromedioDiario, uma*25);
+  const vecesUMA = salarioTopado/uma;
+  const bracket = bracketFor(vecesUMA);
+  const sbcMensual = salarioTopado*DIAS_MES;
+  const cuantiaBasica = sbcMensual*bracket.cb/100;
+  const aniosExcedentes = Math.max(0, Math.floor((semanasTotales-SEMANAS_MIN)/52));
+  const incrementoAnual = sbcMensual*bracket.inc/100*aniosExcedentes;
+  const subtotal = cuantiaBasica+incrementoAnual;
+  const fe = factorEdad(edad);
+  if(fe===null){
+    return {elegible:false};
+  }
+  const pensionEdad = subtotal*fe/100;
+  let asignPct = (conyuge?15:0) + Math.min(hijos,2)*10;
+  if(asignPct===0) asignPct = 15; // ayuda asistencial cuando no hay dependientes con derecho a asignación
+  const pensionAsign = pensionEdad*(1+asignPct/100);
+  const pensionFox = pensionAsign*1.11;
+  const pensionFinal = Math.max(pensionFox, pmg);
+  return {
+    elegible:true, vecesUMA, bracket, sbcMensual, cuantiaBasica, aniosExcedentes,
+    incrementoAnual, subtotal, factorEdadPct:fe, asignPct, pensionAsign, pensionFox,
+    pensionFinal, tocoPMG: pensionFox<pmg
+  };
+}
+
+function actualizarM40Preview(){
+  const meses = parseFloat(document.getElementById('mesesM40').value)||0;
+  const uma = parseFloat(document.getElementById('uma').value)||0;
+  document.getElementById('edadM40out').textContent = Math.round(meses*4.345)+' semanas';
+  document.getElementById('topeUMAout').textContent = fmt(uma*25)+'/día';
+}
+document.querySelectorAll('#mesesM40,#uma').forEach(el=>el.addEventListener('input', actualizarM40Preview));
+
+document.getElementById('activarM40').addEventListener('change', function(){
+  document.getElementById('m40fields').style.opacity = this.checked?1:0.4;
+  document.querySelectorAll('#m40fields input').forEach(i=>i.disabled=!this.checked);
+});
+document.getElementById('activarFin').addEventListener('change', function(){
+  document.getElementById('finfields').disabled = !this.checked;
+  document.getElementById('finfields').style.opacity = this.checked?1:0.5;
+});
+document.getElementById('finfields').style.opacity = 0.5;
+
+function calcular(){
+  const edad = parseFloat(document.getElementById('edad').value);
+  const semanas = parseFloat(document.getElementById('semanas').value);
+  const salarioActual = parseFloat(document.getElementById('salarioActual').value);
+  const salarioPromedioInput = document.getElementById('salarioPromedio').value;
+  const salarioPromedio = salarioPromedioInput? parseFloat(salarioPromedioInput) : salarioActual;
+  const conyuge = document.getElementById('conyuge').value === 'si';
+  const hijos = parseInt(document.getElementById('hijos').value);
+  const uma = parseFloat(document.getElementById('uma').value);
+  const pmg = parseFloat(document.getElementById('pmg').value);
+  const activarM40 = document.getElementById('activarM40').checked;
+  const salarioM40 = parseFloat(document.getElementById('salarioM40').value)||0;
+  const mesesM40 = parseFloat(document.getElementById('mesesM40').value)||0;
+  const cuotaM40 = parseFloat(document.getElementById('cuotaM40').value)||0;
+
+  const resSin = calcularPension(semanas, salarioPromedio, edad, conyuge, hijos, uma, pmg);
+
+  let resCon = null, semanasNuevas=0, edadCon=edad, salarioPromCon=salarioPromedio;
+  if(activarM40){
+    const overrideInput = document.getElementById('salarioPromedioM40').value;
+    semanasNuevas = semanas + Math.round(mesesM40*4.345);
+    if(overrideInput){
+      salarioPromCon = parseFloat(overrideInput);
+    } else {
+      const semanasAportadasM40 = Math.min(mesesM40*4.345, SEMANAS_VENTANA);
+      salarioPromCon = (semanasAportadasM40*salarioM40 + (SEMANAS_VENTANA-semanasAportadasM40)*salarioActual)/SEMANAS_VENTANA;
+    }
+    resCon = calcularPension(semanasNuevas, salarioPromCon, edadCon, conyuge, hijos, uma, pmg);
+  }
+
+  renderResultados({resSin, resCon, activarM40, salarioM40, mesesM40, cuotaM40, edad, edadCon, semanas, semanasNuevas});
+}
+
+function barraChart(sinVal, conVal){
+  const max = Math.max(sinVal, conVal, 1);
+  const hSin = Math.max(6, sinVal/max*180);
+  const hCon = Math.max(6, conVal/max*180);
+  return `
+  <div class="chart-wrap">
+    <div class="bars">
+      <div class="bar-col">
+        <div class="amount">${fmt(sinVal)}</div>
+        <div class="bar" style="height:${hSin}px; background:var(--series-1);"></div>
+        <div class="cat-label">Sin Modalidad 40</div>
+      </div>
+      <div class="bar-col">
+        <div class="amount">${fmt(conVal)}</div>
+        <div class="bar" style="height:${hCon}px; background:var(--series-2);"></div>
+        <div class="cat-label">Con Modalidad 40</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderResultados(ctx){
+  const {resSin, resCon, activarM40, salarioM40, mesesM40, cuotaM40, edad, edadCon, semanas, semanasNuevas} = ctx;
+  const el = document.getElementById('resultados');
+
+  if(!resSin.elegible){
+    el.innerHTML = `<div class="placeholder">Con ${edad} años aún no cumples la edad mínima (60 años) para pensión de cesantía en edad avanzada bajo Ley 73.</div>`;
+    return;
+  }
+
+  let html = '';
+  const sinVal = resSin.pensionFinal;
+  const conVal = resCon && resCon.elegible ? resCon.pensionFinal : null;
+
+  const nombre = (document.getElementById('nombreCliente').value||'').trim();
+  const fechaHoy = new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'});
+  html += `<div id="printHeader" style="display:none;">
+      <h2 style="margin:0 0 2px;">Simulación de Pensión IMSS &mdash; Ley 73 y Modalidad 40</h2>
+      <p style="color:var(--text-secondary); margin:0 0 18px; font-size:.9rem;">${nombre?('Preparado para: <strong>'+nombre.replace(/</g,'&lt;')+'</strong> · '):''}Generado el ${fechaHoy}</p>
+    </div>`;
+  html += `<div id="resultsToolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span></span>
+      <button class="primary" style="width:auto; padding:9px 18px; margin-top:0;" onclick="prepararImpresion()">⬇ Descargar como PDF</button>
+    </div>`;
+
+  html += `<div class="section-title">Comparativo de pensión mensual</div>`;
+  html += barraChart(sinVal, conVal||0);
+
+  html += `<div class="stat-row">
+    <div class="stat-tile">
+      <div class="label">Pensión SIN Modalidad 40 ${resSin.tocoPMG?'<span class="badge">Mínima garantizada</span>':''}</div>
+      <div class="value">${fmt(sinVal)}</div>
+      <div class="delta" style="color:var(--text-muted); font-weight:400;">${semanas} semanas · ${edad} años</div>
+    </div>`;
+  if(conVal!==null){
+    const delta = conVal - sinVal;
+    const deltaPct = sinVal>0? (delta/sinVal*100):0;
+    html += `<div class="stat-tile accent">
+      <div class="label">Pensión CON Modalidad 40 ${resCon.tocoPMG?'<span class="badge">Mínima garantizada</span>':''}</div>
+      <div class="value">${fmt(conVal)}</div>
+      <div class="delta">+${fmt(delta)} (+${deltaPct.toFixed(0)}%)</div>
+    </div>`;
+  } else {
+    html += `<div class="stat-tile"><div class="label">Con Modalidad 40</div><div class="value" style="color:var(--text-muted); font-size:1rem;">No simulado</div></div>`;
+  }
+  html += `</div>`;
+
+  // Desglose técnico
+  html += `<div class="section-title">Memoria de cálculo</div>`;
+  html += renderMemoria('Sin Modalidad 40', resSin);
+  if(conVal!==null) html += renderMemoria('Con Modalidad 40', resCon);
+
+  // Financiamiento
+  if(document.getElementById('activarFin').checked && conVal!==null){
+    html += renderFinanciamiento(ctx);
+  }
+
+  el.innerHTML = html;
+}
+
+function renderMemoria(titulo, r){
+  return `
+  <details style="margin-bottom:10px;">
+    <summary>${titulo}: ver memoria de cálculo</summary>
+    <table class="breakdown">
+      <tr><td>Salario promedio (veces UMA)</td><td class="num">${r.vecesUMA.toFixed(2)}</td></tr>
+      <tr><td>SBC mensual</td><td class="num">${fmt(r.sbcMensual)}</td></tr>
+      <tr><td>Cuantía básica (${r.bracket.cb}%)</td><td class="num">${fmt(r.cuantiaBasica)}</td></tr>
+      <tr><td>Incremento anual (${r.aniosExcedentes} años × ${r.bracket.inc}%)</td><td class="num">${fmt(r.incrementoAnual)}</td></tr>
+      <tr><td>Subtotal</td><td class="num">${fmt(r.subtotal)}</td></tr>
+      <tr><td>× Factor por edad (${r.factorEdadPct}%)</td><td class="num">${fmt(r.pensionAsign/(1+r.asignPct/100))}</td></tr>
+      <tr><td>× Asignaciones familiares (+${r.asignPct}%)</td><td class="num">${fmt(r.pensionAsign)}</td></tr>
+      <tr><td>× Incremento decreto 2001 (+11%)</td><td class="num">${fmt(r.pensionFox)}</td></tr>
+      <tr class="total"><td>Pensión mensual final${r.tocoPMG?' (piso: mínima garantizada)':''}</td><td class="num">${fmt(r.pensionFinal)}</td></tr>
+    </table>
+  </details>`;
+}
+
+function renderFinanciamiento(ctx){
+  const {resCon, salarioM40, mesesM40, cuotaM40, semanasNuevas} = ctx;
+  const pensionMejorada = resCon.pensionFinal;
+
+  const pagoIMSS = salarioM40*DIAS_MES*(cuotaM40/100)*mesesM40;
+  const semanasDescontadas = parseFloat(document.getElementById('semanasDescontadas').value)||0;
+  const montoPrestamo = pagoIMSS + semanasDescontadas;
+  const analisisRiesgo = parseFloat(document.getElementById('pctRiesgo').value)||0;
+  const pctSeguro = parseFloat(document.getElementById('pctSeguro').value)||0;
+  const seguroProyecto = montoPrestamo*pctSeguro/100;
+  const pctInteres = parseFloat(document.getElementById('pctInteres').value)||0;
+  const interesesFinanciados = montoPrestamo*pctInteres/100;
+  const honorarioMult = parseFloat(document.getElementById('honorarioMeses').value)||0;
+  const honorarios = pensionMejorada*honorarioMult;
+  const totalLiquidar = montoPrestamo+analisisRiesgo+seguroProyecto+interesesFinanciados+honorarios;
+
+  const montoAfore = parseFloat(document.getElementById('montoAfore').value)||0;
+  const mesesRetro = parseFloat(document.getElementById('mesesRetro').value)||0;
+  const pensionRetroactiva = mesesRetro*ctx.resSin.pensionFinal;
+  const montoRecibido = montoAfore + pensionRetroactiva;
+  const financiamientoExterno = Math.max(0, totalLiquidar - montoRecibido);
+  const saldoNeto = montoRecibido - totalLiquidar;
+
+  const plazoMeses = parseFloat(document.getElementById('mesesDescNomina').value)||60;
+  const descuentoMensual = financiamientoExterno>0 ? (financiamientoExterno*(1+pctInteres/100))/plazoMeses : 0;
+  const pensionLibreInicial = pensionMejorada - descuentoMensual;
+  const incrementoMensual = pensionMejorada - ctx.resSin.pensionFinal;
+  const mesesRecuperacion = incrementoMensual>0 ? financiamientoExterno/incrementoMensual : null;
+
+  return `
+  <div class="section-title">Esquema de financiamiento (estimado)</div>
+  <p class="note">Réplica generalizada de un esquema de asesoría típico: se paga Modalidad 40 con un préstamo, se liquida con el AFORE + pensión retroactiva, y el remanente se descuenta de la nueva pensión. <strong>Ajusta las tasas del panel izquierdo</strong> a tu caso real.</p>
+  <table class="breakdown">
+    <tr><th>Concepto</th><th class="num">Monto</th></tr>
+    <tr><td>Pago aproximado al IMSS (cuotas Modalidad 40) <span title="Estimado como salario declarado × tasa × meses. El IMSS cobra ramos adicionales (enfermedad, invalidez y vida) y la tasa sube cada año, así que tu recibo real puede ser mayor. Confírmalo con tu línea de captura del IMSS.">ⓘ</span></td><td class="num">${fmt(pagoIMSS)}</td></tr>
+    <tr><td>Pago semanas descontadas / recuperación</td><td class="num">${fmt(semanasDescontadas)}</td></tr>
+    <tr><td>Monto del préstamo</td><td class="num">${fmt(montoPrestamo)}</td></tr>
+    <tr><td>Análisis de riesgo</td><td class="num">${fmt(analisisRiesgo)}</td></tr>
+    <tr><td>Seguro del proyecto (${pctSeguro}%)</td><td class="num">${fmt(seguroProyecto)}</td></tr>
+    <tr><td>Intereses financiados (${pctInteres}%)</td><td class="num">${fmt(interesesFinanciados)}</td></tr>
+    <tr><td>Honorarios de asesoría</td><td class="num">${fmt(honorarios)}</td></tr>
+    <tr class="total"><td>Total a liquidar</td><td class="num">${fmt(totalLiquidar)}</td></tr>
+    <tr><td>Saldo AFORE disponible</td><td class="num">${fmt(montoAfore)}</td></tr>
+    <tr><td>Pensión retroactiva (${ctx.mesesRetro||document.getElementById('mesesRetro').value} meses)</td><td class="num">${fmt(pensionRetroactiva)}</td></tr>
+    <tr><td>Total recursos disponibles</td><td class="num">${fmt(montoRecibido)}</td></tr>
+    <tr><td>Financiamiento externo requerido</td><td class="num">${fmt(financiamientoExterno)}</td></tr>
+    <tr class="${saldoNeto>=0?'positive':'negative'}"><td>Saldo neto a favor del cliente</td><td class="num">${fmt(saldoNeto)}</td></tr>
+  </table>
+  <div class="stat-row" style="margin-top:16px;">
+    <div class="stat-tile">
+      <div class="label">Descuento mensual estimado (${plazoMeses} meses)</div>
+      <div class="value" style="font-size:1.2rem;">${fmt(descuentoMensual)}</div>
+    </div>
+    <div class="stat-tile">
+      <div class="label">Pensión libre mensual (mientras dure el descuento)</div>
+      <div class="value" style="font-size:1.2rem;">${fmt(pensionLibreInicial)}</div>
+    </div>
+  </div>
+  <p class="note">${mesesRecuperacion? 'Tiempo estimado para recuperar el financiamiento externo vía el incremento de pensión: <strong>'+mesesRecuperacion.toFixed(1)+' meses</strong>.' : ''}</p>
+  `;
+}
+
+let tituloOriginal = document.title;
+window.addEventListener('beforeprint', ()=>{
+  // Abre todos los detalles colapsados para que se vean en el PDF/impresión
+  document.querySelectorAll('#resultados details').forEach(d => d.open = true);
+  tituloOriginal = document.title;
+  const nombre = (document.getElementById('nombreCliente')?.value||'').trim();
+  const fecha = new Date().toISOString().slice(0,10);
+  // El nombre sugerido de archivo al "Guardar como PDF" suele tomarse del <title>
+  document.title = 'Simulacion Pension' + (nombre? ' - '+nombre.replace(/[^\p{L}\p{N}\s-]/gu,'').trim() : '') + ' - ' + fecha;
+});
+window.addEventListener('afterprint', ()=>{ document.title = tituloOriginal; });
+
+function prepararImpresion(){
+  window.print();
+}
+
+// Cálculo inicial de ejemplo al cargar
+window.addEventListener('DOMContentLoaded', ()=>{ actualizarM40Preview(); calcular(); });
+</script>
+</body>
+</html>
