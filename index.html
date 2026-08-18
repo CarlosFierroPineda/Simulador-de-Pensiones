@@ -26,8 +26,8 @@
   }
   header h1{font-size:1.5rem; margin:0 0 6px;}
   header p{color:var(--text-secondary); margin:0; max-width:760px; font-size:.95rem;}
-  .wrap{max-width:1200px; margin:0 auto; padding:0 24px 60px; display:grid; grid-template-columns: 1fr; gap:20px;}
-  @media (min-width:980px){ .wrap{grid-template-columns: 420px 1fr;} }
+  .wrap{max-width:1200px; margin:0 auto; padding:0 24px 60px; display:grid; grid-template-columns: minmax(0,1fr); gap:20px;}
+  @media (min-width:980px){ .wrap{grid-template-columns: minmax(0,420px) minmax(0,1fr);} }
 
   .card{
     background:var(--surface-1); border:1px solid var(--border); border-radius:var(--radius);
@@ -39,12 +39,18 @@
 
   fieldset{border:none; padding:0; margin:0 0 18px;}
   fieldset legend{font-size:.8rem; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.03em; margin-bottom:10px; padding:0;}
-  .field{margin-bottom:12px;}
+  .field{margin-bottom:12px; min-width:0;}
   .field label{display:block; font-size:.85rem; color:var(--text-primary); margin-bottom:4px;}
   .field .hint{display:block; font-size:.75rem; color:var(--text-muted); margin-top:3px;}
-  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .row2{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px;}
+  .row3{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px;}
+  .aviso{background:#fdecea; border:1px solid #f5c2bd; border-radius:8px; padding:10px 12px; font-size:.82rem; color:#8a2b25; margin-bottom:12px;}
+  table.refTable{width:100%; border-collapse:collapse; font-size:.78rem; margin-top:8px;}
+  table.refTable th{text-align:left; color:var(--text-muted); font-weight:600; padding:4px 6px; border-bottom:1px solid var(--gridline);}
+  table.refTable td{padding:4px 6px; border-bottom:1px solid var(--gridline); font-variant-numeric: tabular-nums;}
+  table.refTable td.num{text-align:right;}
   input[type=number], input[type=date], select{
-    width:100%; padding:8px 10px; border:1px solid var(--baseline); border-radius:6px;
+    width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border:1px solid var(--baseline); border-radius:6px;
     font-size:.9rem; background:#fff; color:var(--text-primary); font-variant-numeric: tabular-nums;
   }
   input:focus, select:focus{outline:2px solid var(--series-1); outline-offset:1px;}
@@ -68,15 +74,15 @@
   .disclaimer{font-size:.75rem; color:var(--text-muted); border-top:1px solid var(--gridline); margin-top:16px; padding-top:12px;}
 
   /* Results */
-  .stat-row{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;}
-  .stat-tile{border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; background:var(--surface-1);}
+  .stat-row{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; margin-bottom:18px;}
+  .stat-tile{border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; background:var(--surface-1); min-width:0;}
   .stat-tile .label{font-size:.78rem; color:var(--text-secondary); margin-bottom:4px;}
   .stat-tile .value{font-size:1.6rem; font-weight:700; font-variant-numeric: tabular-nums;}
   .stat-tile.accent .value{color:var(--series-2);}
   .stat-tile .delta{font-size:.8rem; margin-top:4px; color:var(--good); font-weight:600;}
 
-  .chart-wrap{margin:20px 0 24px;}
-  .bars{display:flex; align-items:flex-end; gap:36px; height:200px; padding:0 8px; border-bottom:1px solid var(--baseline);}
+  .chart-wrap{margin:20px 0 24px; max-width:100%; overflow-x:auto;}
+  .bars{display:flex; align-items:flex-end; gap:36px; height:200px; padding:0 8px; border-bottom:1px solid var(--baseline); width:max-content; min-width:100%;}
   .bar-col{display:flex; flex-direction:column; align-items:center; justify-content:flex-end; flex:1; height:100%;}
   .bar-col .amount{font-size:.85rem; font-weight:700; margin-bottom:6px; font-variant-numeric: tabular-nums;}
   .bar{width:64px; border-radius:4px 4px 0 0; transition:height .3s ease;}
@@ -96,18 +102,14 @@
   .placeholder{color:var(--text-muted); font-size:.9rem; padding:40px 0; text-align:center;}
   .badge{display:inline-block; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px; background:#fdecea; color:var(--critical); margin-left:6px;}
 
+  .print-only{display:none;}
   @media print{
+    header, #panelEntradas, #resultsToolbar{display:none !important;}
     body{background:#fff;}
-    header{display:none;}
-    #panelEntradas{display:none !important;}
-    .wrap{display:block; padding:0; max-width:100%;}
-    .card{border:none; padding:0; box-shadow:none;}
-    #printHeader{display:block !important;}
-    #resultsToolbar{display:none !important;}
-    details summary{display:none;}
-    .chart-wrap{page-break-inside:avoid;}
-    table.breakdown{page-break-inside:avoid;}
-    .stat-tile{border:1px solid #ccc;}
+    .wrap{grid-template-columns:1fr; max-width:100%; padding:0; margin:0;}
+    .card{border:none; padding:0;}
+    .print-only{display:block;}
+    details{page-break-inside:avoid;}
   }
 </style>
 </head>
@@ -127,34 +129,47 @@
       <p class="sub">Captura la información base para calcular la pensión.</p>
 
       <div class="field">
-        <label for="nombreCliente">Nombre completo (para el PDF)</label>
-        <input type="text" id="nombreCliente" placeholder="Ej. Juan Perez Lopez">
-        <span class="hint">Aparecerá en el encabezado al descargar tu simulación en PDF, para que cada persona tenga su propio archivo.</span>
+        <label for="nombreCliente">Nombre completo</label>
+        <input type="text" id="nombreCliente" placeholder="Ej. Nombre Apellidos">
+        <span class="hint">Aparecerá en el PDF y en el mensaje del botón de consulta, para que cada persona tenga su propio resultado.</span>
       </div>
 
       <fieldset>
         <legend>Situación actual</legend>
-        <div class="row2">
+        <div class="row3">
           <div class="field">
-            <label for="edad">Edad al pensionarte (años)</label>
-            <input type="number" id="edad" min="50" max="70" step="1" value="61">
-            <span class="hint">Misma edad para ambos escenarios: con Modalidad 40 solo cambian tus semanas y tu salario promedio, no tu fecha de pensión.</span>
+            <label for="fechaNacimiento">Fecha de nacimiento</label>
+            <input type="date" id="fechaNacimiento" value="1965-09-12">
           </div>
           <div class="field">
-            <label for="semanas">Semanas cotizadas SIN Modalidad 40</label>
-            <input type="number" id="semanas" min="0" step="1" value="1221">
-            <span class="hint">Proyectadas a la fecha de pensión, sin contar semanas adicionales de Modalidad 40.</span>
+            <label for="fechaBaja">Fecha de baja (dejaste de cotizar)</label>
+            <input type="date" id="fechaBaja" value="2024-04-04">
           </div>
+          <div class="field">
+            <label for="fechaPension">Fecha estimada de pensión</label>
+            <input type="date" id="fechaPension" value="2026-08-27">
+          </div>
+        </div>
+        <div class="field">
+          <span class="hint" id="edadCalculadaOut">—</span>
+        </div>
+        <div class="aviso" id="avisoCincoAnios" style="display:none;">
+          ⚠ Han pasado más de 5 años desde tu fecha de baja. El artículo 219 de la Ley del Seguro Social exige inscribirte a Modalidad&nbsp;40 dentro de los 5 años posteriores a tu baja, o pierdes el derecho — verifícalo con el IMSS antes de continuar con esta estrategia.
         </div>
         <div class="row2">
           <div class="field">
-            <label for="salarioActual">Salario diario actual (SBC $)</label>
-            <input type="number" id="salarioActual" min="0" step="0.01" value="150">
+            <label for="semanas">Semanas cotizadas SIN Modalidad 40</label>
+            <input type="number" id="semanas" min="0" step="1" value="1180">
+            <span class="hint">Del reporte de semanas cotizadas que descargas desde la página oficial del IMSS.</span>
           </div>
           <div class="field">
-            <label for="salarioPromedio">Prom. real últimas 250 sem. ($, opcional)</label>
-            <input type="number" id="salarioPromedio" min="0" step="0.01" placeholder="= salario actual">
+            <label for="salarioActual">Salario diario actual (SBC $)</label>
+            <input type="number" id="salarioActual" min="0" step="0.01" value="148.16">
           </div>
+        </div>
+        <div class="field">
+          <label for="salarioPromedio">Prom. real últimas 250 sem. ($, opcional)</label>
+          <input type="number" id="salarioPromedio" min="0" step="0.01" placeholder="= salario actual">
         </div>
         <div class="row2">
           <div class="field">
@@ -173,23 +188,23 @@
         <label for="activarM40">Simular estrategia de Modalidad 40</label>
       </div>
       <fieldset id="m40fields">
-        <div class="row2">
-          <div class="field">
-            <label for="salarioM40">Salario diario a declarar en Modalidad 40 ($)</label>
-            <input type="number" id="salarioM40" min="0" step="0.01" value="1450">
-          </div>
-          <div class="field">
-            <label for="mesesM40">Meses pagando Modalidad 40</label>
-            <input type="number" id="mesesM40" min="1" max="60" step="1" value="29">
-          </div>
+        <div class="field">
+          <label for="salarioM40">Salario promedio ya con retroactivos Modalidad 40 ($/día)</label>
+          <input type="number" id="salarioM40" min="0" step="0.01" value="1452.25">
         </div>
         <div class="field">
-          <span class="hint">Semanas adicionales que sumará Modalidad 40: <strong id="edadM40out">—</strong> · Tope legal: 25 UMA/día (<span id="topeUMAout">—</span>)</span>
+          <label for="pensionObjetivo">Pensión mensual que esperas con Modalidad 40 ($, opcional)</label>
+          <input type="number" id="pensionObjetivo" min="0" step="0.01" placeholder="ej. 22994.38">
+          <button type="button" style="width:auto; padding:8px 14px; margin-top:6px; font-size:.85rem; border:none; border-radius:8px; background:#5b6472; color:#fff; cursor:pointer;" onclick="aplicarSalarioNecesario()" onmouseover="this.style.background='#454c57'" onmouseout="this.style.background='#5b6472'">Calcular salario promedio necesario ⇒</button>
+          <span class="hint" id="salarioNecesarioOut">En función de tu edad, tus semanas y tus dependientes, calcula qué salario promedio necesitas declarar para llegar a la pensión que esperas.</span>
+        </div>
+        <div class="field">
+          <span class="hint">Con retroactividad, las aportaciones adicionales pueden aplicarse tanto a semanas ya pagadas como a semanas nuevas no pagadas — por eso el salario de arriba ya es el promedio resultante de las 250 semanas. Semanas retroactivas calculadas (de tu fecha de baja a tu fecha de pensión): <strong id="semanasM40out">—</strong> · Tope legal: 25 UMA/día (<span id="topeUMAout">—</span>)</span>
         </div>
         <div class="field">
           <label for="salarioPromedioM40">Salario promedio esperado CON Modalidad 40 ($/día, opcional)</label>
           <input type="number" id="salarioPromedioM40" min="0" step="0.01" placeholder="se estima automáticamente">
-          <span class="hint">Si tu asesor o el IMSS ya te dieron una estimación de tu salario promedio de las últimas 250 semanas, captúrala aquí. Si lo dejas vacío, el simulador la estima con un promedio ponderado simple entre tu salario actual y el declarado en Modalidad&nbsp;40 — el IMSS puede ponderar distinto (por indexación de salarios antiguos), así que trátalo como punto de partida.</span>
+          <span class="hint">Úsalo solo si tu asesor o el IMSS ya te dieron una cifra distinta a la del campo de arriba para el promedio de las últimas 250 semanas. Si lo dejas vacío, se usa directamente el salario del campo de arriba.</span>
         </div>
       </fieldset>
 
@@ -209,6 +224,22 @@
           <label for="cuotaM40">Cuota Modalidad 40 (% del salario declarado)</label>
           <input type="number" id="cuotaM40" min="0" step="0.001" value="14.438">
           <span class="hint">⚠️ Esta tasa NO viene de una fuente oficial del IMSS, es una referencia de terceros y el IMSS la sube cada año. Antes de usar el simulador para una cotización real, confírmala con tu línea de captura o con tu asesor.</span>
+          <details style="margin-top:8px; border-top:none; padding-top:0;">
+            <summary style="font-size:.78rem;">Ver tabla de referencia por año (informativa)</summary>
+            <table class="refTable">
+              <tr><th>Año</th><th class="num">Cuota total M40</th></tr>
+              <tr><td>2022</td><td class="num">10.075%</td></tr>
+              <tr><td>2023</td><td class="num">11.166%</td></tr>
+              <tr><td>2024</td><td class="num">12.256%</td></tr>
+              <tr><td>2025</td><td class="num">13.347%</td></tr>
+              <tr><td>2026</td><td class="num">14.438%</td></tr>
+              <tr><td>2027*</td><td class="num">15.529%</td></tr>
+              <tr><td>2028*</td><td class="num">16.620%</td></tr>
+              <tr><td>2029*</td><td class="num">17.711%</td></tr>
+              <tr><td>2030</td><td class="num">18.800%</td></tr>
+            </table>
+            <span class="hint">Por la reforma a la LSS de diciembre de 2020, la cuota total de Modalidad&nbsp;40 sube gradualmente cada año de 2022 a 2030. Los años marcados con * son estimados por interpolación (no confirmados en una fuente primaria); el resto está corroborado por varias fuentes especializadas, pero ninguna es la tabla oficial del IMSS directamente. Usa esta tabla como referencia para ajustar el campo de arriba al año en que se hace el pago — el simulador no la aplica automáticamente.</span>
+          </details>
         </div>
         <p class="note" style="margin-top:14px; border-top:1px solid var(--gridline); padding-top:10px;">
           UMA diaria y Pensión Mínima Garantizada verificadas contra fuentes públicas en agosto 2026 (UMA vigente desde el 1&nbsp;feb&nbsp;2026 según INEGI). Estos valores cambian cada año — la UMA en febrero, la pensión mínima suele ajustarse junto con el salario mínimo en enero. Revisa y actualiza estos campos cuando los uses más adelante.
@@ -229,8 +260,9 @@
       <fieldset id="finfields" disabled>
         <legend>Costos de la estrategia</legend>
         <div class="field">
-          <label for="semanasDescontadas">Pago por semanas descontadas / recuperación ($)</label>
-          <input type="number" id="semanasDescontadas" min="0" step="0.01" value="0">
+          <label for="otrosFinanciera">Otros costos que la financiera considere ($)</label>
+          <input type="number" id="otrosFinanciera" min="0" step="0.01" value="0">
+          <span class="hint">El monto del préstamo se arma de tres partes: lo que cuesta completar las semanas ya pagadas + lo que cuesta declarar las semanas nuevas + lo que la financiera decida agregar aquí (por ejemplo, si un préstamo de $400,000 se compone de $140,000 de semanas completadas + $160,000 de semanas nuevas, aquí irían los $100,000 restantes que la financiera considere de más).</span>
         </div>
         <div class="row2">
           <div class="field">
@@ -351,13 +383,73 @@ function calcularPension(semanasTotales, salarioPromedioDiario, edad, conyuge, h
   };
 }
 
-function actualizarM40Preview(){
-  const meses = parseFloat(document.getElementById('mesesM40').value)||0;
-  const uma = parseFloat(document.getElementById('uma').value)||0;
-  document.getElementById('edadM40out').textContent = Math.round(meses*4.345)+' semanas';
-  document.getElementById('topeUMAout').textContent = fmt(uma*25)+'/día';
+// ---------- Utilidades de fechas (edad exacta, semanas retroactivas, desglose anual) ----------
+function parseFechaLocal(str){
+  if(!str) return null;
+  const d = new Date(str+'T00:00:00');
+  return isNaN(d) ? null : d;
 }
-document.querySelectorAll('#mesesM40,#uma').forEach(el=>el.addEventListener('input', actualizarM40Preview));
+
+// Edad exacta (años, meses, días completos) en la fecha de referencia
+function edadEnFecha(fechaNacStr, fechaRefStr){
+  const nac = parseFechaLocal(fechaNacStr), ref = parseFechaLocal(fechaRefStr);
+  if(!nac || !ref || ref<nac) return null;
+  let años = ref.getFullYear()-nac.getFullYear();
+  let meses = ref.getMonth()-nac.getMonth();
+  let dias = ref.getDate()-nac.getDate();
+  if(dias<0){
+    meses -= 1;
+    dias += new Date(ref.getFullYear(), ref.getMonth(), 0).getDate();
+  }
+  if(meses<0){ años -= 1; meses += 12; }
+  return {años, meses, dias};
+}
+
+// Semanas entre dos fechas (decimal)
+function semanasEntreFechas(fecha1Str, fecha2Str){
+  const d1 = parseFechaLocal(fecha1Str), d2 = parseFechaLocal(fecha2Str);
+  if(!d1 || !d2 || d2<=d1) return 0;
+  return Math.round((d2-d1)/86400000)/7;
+}
+
+// Desglose de semanas retroactivas por año calendario, entre fecha de baja y fecha de pensión
+function semanasPorAño(fechaBajaStr, fechaPensionStr){
+  const inicio = parseFechaLocal(fechaBajaStr), fin = parseFechaLocal(fechaPensionStr);
+  const resultado = [];
+  if(!inicio || !fin || fin<=inicio) return resultado;
+  const añoFinal = fin.getFullYear();
+  for(let y=inicio.getFullYear(); y<=añoFinal; y++){
+    const inicioSeg = y===inicio.getFullYear() ? inicio : new Date(y,0,1);
+    const finSeg = y===añoFinal ? fin : new Date(y+1,0,1);
+    const dias = Math.max(0, Math.round((finSeg-inicioSeg)/86400000));
+    if(dias>0) resultado.push({año:y, semanas:dias/7});
+  }
+  return resultado;
+}
+
+function actualizarFechasPreview(){
+  const fechaNacimiento = document.getElementById('fechaNacimiento').value;
+  const fechaBaja = document.getElementById('fechaBaja').value;
+  const fechaPension = document.getElementById('fechaPension').value;
+  const uma = parseFloat(document.getElementById('uma').value)||0;
+
+  const edadObj = edadEnFecha(fechaNacimiento, fechaPension);
+  const edadOut = document.getElementById('edadCalculadaOut');
+  if(edadObj){
+    edadOut.innerHTML = `Edad en la fecha de pensión: <strong>${edadObj.años} años, ${edadObj.meses} meses, ${edadObj.dias} días</strong> (misma edad para ambos escenarios: con Modalidad&nbsp;40 solo cambian tus semanas y tu salario promedio, no tu fecha de pensión).`;
+  } else {
+    edadOut.textContent = 'Captura la fecha de nacimiento y la fecha de pensión para calcular tu edad exacta.';
+  }
+
+  const semanasM40 = semanasEntreFechas(fechaBaja, fechaPension);
+  document.getElementById('semanasM40out').textContent = semanasM40>0 ? Math.round(semanasM40)+' semanas' : '—';
+  document.getElementById('topeUMAout').textContent = fmt(uma*25)+'/día';
+
+  const bajaObj = edadEnFecha(fechaBaja, fechaPension); // reutilizamos la resta de fechas para años transcurridos
+  const aviso = document.getElementById('avisoCincoAnios');
+  aviso.style.display = (bajaObj && (bajaObj.años>5 || (bajaObj.años===5 && (bajaObj.meses>0||bajaObj.dias>0)))) ? 'block' : 'none';
+}
+document.querySelectorAll('#fechaNacimiento,#fechaBaja,#fechaPension,#uma').forEach(el=>el.addEventListener('input', actualizarFechasPreview));
 
 document.getElementById('activarM40').addEventListener('change', function(){
   document.getElementById('m40fields').style.opacity = this.checked?1:0.4;
@@ -370,7 +462,12 @@ document.getElementById('activarFin').addEventListener('change', function(){
 document.getElementById('finfields').style.opacity = 0.5;
 
 function calcular(){
-  const edad = parseFloat(document.getElementById('edad').value);
+  actualizarFechasPreview();
+  const fechaNacimiento = document.getElementById('fechaNacimiento').value;
+  const fechaBaja = document.getElementById('fechaBaja').value;
+  const fechaPension = document.getElementById('fechaPension').value;
+  const edadObj = edadEnFecha(fechaNacimiento, fechaPension);
+  const edad = edadObj ? edadObj.años + edadObj.meses/12 : NaN;
   const semanas = parseFloat(document.getElementById('semanas').value);
   const salarioActual = parseFloat(document.getElementById('salarioActual').value);
   const salarioPromedioInput = document.getElementById('salarioPromedio').value;
@@ -381,7 +478,7 @@ function calcular(){
   const pmg = parseFloat(document.getElementById('pmg').value);
   const activarM40 = document.getElementById('activarM40').checked;
   const salarioM40 = parseFloat(document.getElementById('salarioM40').value)||0;
-  const mesesM40 = parseFloat(document.getElementById('mesesM40').value)||0;
+  const semanasM40 = semanasEntreFechas(fechaBaja, fechaPension);
   const cuotaM40 = parseFloat(document.getElementById('cuotaM40').value)||0;
 
   const resSin = calcularPension(semanas, salarioPromedio, edad, conyuge, hijos, uma, pmg);
@@ -389,17 +486,16 @@ function calcular(){
   let resCon = null, semanasNuevas=0, edadCon=edad, salarioPromCon=salarioPromedio;
   if(activarM40){
     const overrideInput = document.getElementById('salarioPromedioM40').value;
-    semanasNuevas = semanas + Math.round(mesesM40*4.345);
-    if(overrideInput){
-      salarioPromCon = parseFloat(overrideInput);
-    } else {
-      const semanasAportadasM40 = Math.min(mesesM40*4.345, SEMANAS_VENTANA);
-      salarioPromCon = (semanasAportadasM40*salarioM40 + (SEMANAS_VENTANA-semanasAportadasM40)*salarioActual)/SEMANAS_VENTANA;
-    }
+    semanasNuevas = semanas + Math.round(semanasM40);
+    // Con retroactividad, las aportaciones adicionales de Modalidad 40 pueden aplicarse
+    // tanto a semanas ya pagadas (subiendo su SBC) como a semanas nuevas no pagadas,
+    // por lo que el salario declarado YA es el promedio resultante de las 250 semanas
+    // — no se mezcla con el salario actual bajo, que queda sobrescrito por la retroactividad.
+    salarioPromCon = overrideInput ? parseFloat(overrideInput) : salarioM40;
     resCon = calcularPension(semanasNuevas, salarioPromCon, edadCon, conyuge, hijos, uma, pmg);
   }
 
-  renderResultados({resSin, resCon, activarM40, salarioM40, mesesM40, cuotaM40, edad, edadCon, semanas, semanasNuevas});
+  renderResultados({resSin, resCon, activarM40, salarioM40, salarioActual, semanasM40, cuotaM40, edad, edadCon, semanas, semanasNuevas});
 }
 
 function barraChart(sinVal, conVal){
@@ -423,28 +519,116 @@ function barraChart(sinVal, conVal){
   </div>`;
 }
 
+// Semanas cotizadas (ya pagadas, azul) vs semanas retroactivas de Modalidad 40
+// (naranja), desglosadas por año calendario para que se vea cuántas semanas —
+// y a qué tasa oficial aproximada— caen en cada año.
+function semanasPorAñoChart(semanasCotizadas, desglosePorAño){
+  const totalRetro = desglosePorAño.reduce((s,d)=>s+d.semanas,0);
+  const max = Math.max(semanasCotizadas, ...desglosePorAño.map(d=>d.semanas), 1);
+  const escala = 170/max;
+  let cols = `<div class="bar-col">
+      <div class="amount">${Math.round(semanasCotizadas)}</div>
+      <div class="bar" style="height:${Math.max(6,semanasCotizadas*escala)}px; background:var(--series-1);"></div>
+      <div class="cat-label">Semanas cotizadas</div>
+    </div>`;
+  desglosePorAño.forEach(d=>{
+    cols += `<div class="bar-col">
+      <div class="amount">${Math.round(d.semanas)}</div>
+      <div class="bar" style="height:${Math.max(6,d.semanas*escala)}px; background:var(--series-2);" title="Semanas retroactivas registradas en ${d.año}"></div>
+      <div class="cat-label">${d.año}</div>
+    </div>`;
+  });
+  return `
+  <div class="chart-wrap">
+    <div class="bars">${cols}</div>
+  </div>
+  <div style="display:flex; gap:16px; margin-top:6px; font-size:.78rem; color:var(--text-secondary);">
+    <span><span style="display:inline-block; width:10px; height:10px; background:var(--series-1); border-radius:2px; margin-right:4px;"></span>Semanas ya cotizadas</span>
+    <span><span style="display:inline-block; width:10px; height:10px; background:var(--series-2); border-radius:2px; margin-right:4px;"></span>Semanas retroactivas de Modalidad&nbsp;40 (por año)</span>
+  </div>
+  <p class="note">Total de semanas retroactivas: <strong>${Math.round(totalRetro)}</strong>, calculadas de tu fecha de baja a tu fecha de pensión.</p>`;
+}
+
+// Resuelve por bisección qué salario promedio diario se necesita declarar para
+// alcanzar una pensión mensual objetivo, dadas las demás variables.
+function calcularSalarioNecesario(pensionObjetivo, semanasTotales, edad, conyuge, hijos, uma, pmg){
+  let lo = 0, hi = uma*25;
+  for(let i=0; i<50; i++){
+    const mid = (lo+hi)/2;
+    const r = calcularPension(semanasTotales, mid, edad, conyuge, hijos, uma, pmg);
+    if(!r.elegible) return null;
+    if(r.pensionFinal < pensionObjetivo) lo = mid; else hi = mid;
+  }
+  return (lo+hi)/2;
+}
+
+function aplicarSalarioNecesario(){
+  const pensionObjetivo = parseFloat(document.getElementById('pensionObjetivo').value);
+  const out = document.getElementById('salarioNecesarioOut');
+  if(!pensionObjetivo){
+    out.textContent = 'Captura primero la pensión mensual que esperas.';
+    return;
+  }
+  actualizarFechasPreview();
+  const fechaNacimiento = document.getElementById('fechaNacimiento').value;
+  const fechaBaja = document.getElementById('fechaBaja').value;
+  const fechaPension = document.getElementById('fechaPension').value;
+  const edadObj = edadEnFecha(fechaNacimiento, fechaPension);
+  if(!edadObj){ out.textContent = 'Captura primero tus fechas de nacimiento, baja y pensión.'; return; }
+  const edad = edadObj.años + edadObj.meses/12;
+  const semanas = parseFloat(document.getElementById('semanas').value)||0;
+  const semanasM40 = semanasEntreFechas(fechaBaja, fechaPension);
+  const semanasNuevas = semanas + Math.round(semanasM40);
+  const conyuge = document.getElementById('conyuge').value === 'si';
+  const hijos = parseInt(document.getElementById('hijos').value);
+  const uma = parseFloat(document.getElementById('uma').value);
+  const pmg = parseFloat(document.getElementById('pmg').value);
+
+  const salarioNecesario = calcularSalarioNecesario(pensionObjetivo, semanasNuevas, edad, conyuge, hijos, uma, pmg);
+  if(salarioNecesario===null){
+    out.textContent = 'No es posible calcularlo con la edad capturada.';
+    return;
+  }
+  const tope = uma*25;
+  document.getElementById('salarioM40').value = salarioNecesario.toFixed(2);
+  if(salarioNecesario >= tope-0.01){
+    out.innerHTML = `⚠️ Ni declarando el tope legal (25 UMA, ${fmt(tope)}/día) se alcanza esa pensión con tus semanas y edad actuales. Se dejó el salario en el tope.`;
+  } else {
+    out.innerHTML = `Salario promedio necesario: <strong>${fmt(salarioNecesario)}/día</strong> para llegar a ${fmt(pensionObjetivo)}/mes.`;
+  }
+  calcular();
+}
+
 function renderResultados(ctx){
-  const {resSin, resCon, activarM40, salarioM40, mesesM40, cuotaM40, edad, edadCon, semanas, semanasNuevas} = ctx;
+  const {resSin, resCon, activarM40, salarioM40, salarioActual, semanasM40, cuotaM40, edad, edadCon, semanas, semanasNuevas} = ctx;
   const el = document.getElementById('resultados');
 
+  if(isNaN(edad)){
+    el.innerHTML = `<div class="placeholder">Captura tu fecha de nacimiento y tu fecha de pensión para calcular tu edad.</div>`;
+    return;
+  }
   if(!resSin.elegible){
-    el.innerHTML = `<div class="placeholder">Con ${edad} años aún no cumples la edad mínima (60 años) para pensión de cesantía en edad avanzada bajo Ley 73.</div>`;
+    el.innerHTML = `<div class="placeholder">Con ${Math.floor(edad)} años aún no cumples la edad mínima (60 años) para pensión de cesantía en edad avanzada bajo Ley 73.</div>`;
     return;
   }
 
   let html = '';
   const sinVal = resSin.pensionFinal;
   const conVal = resCon && resCon.elegible ? resCon.pensionFinal : null;
-
   const nombre = (document.getElementById('nombreCliente').value||'').trim();
   const fechaHoy = new Date().toLocaleDateString('es-MX', {year:'numeric', month:'long', day:'numeric'});
-  html += `<div id="printHeader" style="display:none;">
-      <h2 style="margin:0 0 2px;">Simulación de Pensión IMSS &mdash; Ley 73 y Modalidad 40</h2>
-      <p style="color:var(--text-secondary); margin:0 0 18px; font-size:.9rem;">${nombre?('Preparado para: <strong>'+nombre.replace(/</g,'&lt;')+'</strong> · '):''}Generado el ${fechaHoy}</p>
+
+  window._ultimoResultado = { resSin, resCon, sinVal, conVal, activarM40, nombre };
+
+  html += `<div id="printHeader" class="print-only">
+      <h2 style="margin:0 0 4px;">Simulación de Pensión IMSS &mdash; Ley 73${activarM40 && conVal!==null ? ' + Modalidad 40' : ''}</h2>
+      ${nombre?`<p style="margin:0 0 2px;">Preparado para: ${nombre}</p>`:''}
+      <p style="margin:0 0 14px; color:var(--text-muted);">Fecha: ${fechaHoy}</p>
     </div>`;
-  html += `<div id="resultsToolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-      <span></span>
-      <button class="primary" style="width:auto; padding:9px 18px; margin-top:0;" onclick="prepararImpresion()">⬇ Descargar como PDF</button>
+
+  html += `<div id="resultsToolbar" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:6px;">
+      <button class="primary" style="width:auto; padding:9px 18px; margin-top:0; background:#5b6472;" onclick="descargarPDF()" onmouseover="this.style.background='#454c57'" onmouseout="this.style.background='#5b6472'">⬇ Descargar como PDF</button>
+      <button class="primary" style="width:auto; padding:9px 18px; margin-top:0; background:#25D366;" onclick="enviarConsulta()" onmouseover="this.style.background='#1ebe5b'" onmouseout="this.style.background='#25D366'">📞 CONSULTA</button>
     </div>`;
 
   html += `<div class="section-title">Comparativo de pensión mensual</div>`;
@@ -454,7 +638,7 @@ function renderResultados(ctx){
     <div class="stat-tile">
       <div class="label">Pensión SIN Modalidad 40 ${resSin.tocoPMG?'<span class="badge">Mínima garantizada</span>':''}</div>
       <div class="value">${fmt(sinVal)}</div>
-      <div class="delta" style="color:var(--text-muted); font-weight:400;">${semanas} semanas · ${edad} años</div>
+      <div class="delta" style="color:var(--text-muted); font-weight:400;">${semanas} semanas · ${Math.floor(edad)} años</div>
     </div>`;
   if(conVal!==null){
     const delta = conVal - sinVal;
@@ -474,10 +658,25 @@ function renderResultados(ctx){
   html += renderMemoria('Sin Modalidad 40', resSin);
   if(conVal!==null) html += renderMemoria('Con Modalidad 40', resCon);
 
-  // Financiamiento
-  if(document.getElementById('activarFin').checked && conVal!==null){
-    html += renderFinanciamiento(ctx);
+  // Semanas cotizadas vs semanas retroactivas de Modalidad 40, por año
+  if(activarM40 && conVal!==null){
+    const fechaBaja = document.getElementById('fechaBaja').value;
+    const fechaPension = document.getElementById('fechaPension').value;
+    const desglosePorAño = semanasPorAño(fechaBaja, fechaPension);
+    if(desglosePorAño.length){
+      html += `<div class="section-title">Semanas cotizadas vs. semanas retroactivas</div>`;
+      html += `<p class="note" style="margin-top:-4px;">${semanas} semanas ya cotizadas antes de tu baja, más las semanas retroactivas de Modalidad&nbsp;40 que se registran año por año hasta tu fecha de pensión.</p>`;
+      html += semanasPorAñoChart(semanas, desglosePorAño);
+    }
   }
+
+  // Financiamiento
+  let finData = null;
+  if(document.getElementById('activarFin').checked && conVal!==null){
+    finData = calcularFinanciamiento(ctx);
+    html += renderFinanciamiento(finData);
+  }
+  window._ultimoResultado.finData = finData;
 
   el.innerHTML = html;
 }
@@ -500,13 +699,25 @@ function renderMemoria(titulo, r){
   </details>`;
 }
 
-function renderFinanciamiento(ctx){
-  const {resCon, salarioM40, mesesM40, cuotaM40, semanasNuevas} = ctx;
+function calcularFinanciamiento(ctx){
+  const {resCon, salarioM40, salarioActual, semanasM40, cuotaM40, semanasNuevas} = ctx;
   const pensionMejorada = resCon.pensionFinal;
 
-  const pagoIMSS = salarioM40*DIAS_MES*(cuotaM40/100)*mesesM40;
-  const semanasDescontadas = parseFloat(document.getElementById('semanasDescontadas').value)||0;
-  const montoPrestamo = pagoIMSS + semanasDescontadas;
+  // El monto del préstamo se compone de tres partes:
+  // 1) lo que cuesta ante el IMSS completar las semanas que ya estaban pagadas
+  //    (cuota sobre la diferencia entre el salario ya registrado y el objetivo)
+  // 2) lo que cuesta declarar las semanas nuevas (cuota sobre el salario completo,
+  //    porque antes no había nada que completar)
+  // 3) lo que la financiera decida agregar aparte (otros costos)
+  const DIAS_SEMANA = 7;
+  const semanasCompletadas = Math.max(0, SEMANAS_VENTANA - semanasM40);
+  const aportacionCompletada = Math.max(0, salarioM40 - salarioActual);
+  const pagoCompletadas = aportacionCompletada * DIAS_SEMANA * semanasCompletadas * (cuotaM40/100);
+  const pagoNuevas = salarioM40 * DIAS_SEMANA * semanasM40 * (cuotaM40/100);
+  const pagoIMSS = pagoCompletadas + pagoNuevas;
+  const otros = parseFloat(document.getElementById('otrosFinanciera').value)||0;
+  const montoPrestamo = pagoIMSS + otros;
+
   const analisisRiesgo = parseFloat(document.getElementById('pctRiesgo').value)||0;
   const pctSeguro = parseFloat(document.getElementById('pctSeguro').value)||0;
   const seguroProyecto = montoPrestamo*pctSeguro/100;
@@ -519,9 +730,13 @@ function renderFinanciamiento(ctx){
   const montoAfore = parseFloat(document.getElementById('montoAfore').value)||0;
   const mesesRetro = parseFloat(document.getElementById('mesesRetro').value)||0;
   const pensionRetroactiva = mesesRetro*ctx.resSin.pensionFinal;
-  const montoRecibido = montoAfore + pensionRetroactiva;
-  const financiamientoExterno = Math.max(0, totalLiquidar - montoRecibido);
-  const saldoNeto = montoRecibido - totalLiquidar;
+  const recursosPropios = montoAfore + pensionRetroactiva;
+  // El financiamiento externo se dimensiona justo para cubrir lo que falta —
+  // por eso, una vez sumado a los recursos propios, el saldo neto siempre cierra en $0
+  // (o queda en positivo si los recursos propios ya alcanzaban sin necesidad de préstamo).
+  const financiamientoExterno = Math.max(0, totalLiquidar - recursosPropios);
+  const montoPorRecibir = recursosPropios + financiamientoExterno;
+  const saldoNeto = montoPorRecibir - totalLiquidar;
 
   const plazoMeses = parseFloat(document.getElementById('mesesDescNomina').value)||60;
   const descuentoMensual = financiamientoExterno>0 ? (financiamientoExterno*(1+pctInteres/100))/plazoMeses : 0;
@@ -529,57 +744,81 @@ function renderFinanciamiento(ctx){
   const incrementoMensual = pensionMejorada - ctx.resSin.pensionFinal;
   const mesesRecuperacion = incrementoMensual>0 ? financiamientoExterno/incrementoMensual : null;
 
+  return {semanasCompletadas, aportacionCompletada, pagoCompletadas, semanasNuevasM40:semanasM40, salarioM40,
+    pagoNuevas, pagoIMSS, otros, montoPrestamo, analisisRiesgo, pctSeguro, seguroProyecto, pctInteres,
+    interesesFinanciados, honorarios, totalLiquidar, montoAfore, mesesRetro, pensionRetroactiva, recursosPropios,
+    financiamientoExterno, montoPorRecibir, saldoNeto, plazoMeses, descuentoMensual, pensionLibreInicial, mesesRecuperacion};
+}
+
+function renderFinanciamiento(f){
   return `
   <div class="section-title">Esquema de financiamiento (estimado)</div>
   <p class="note">Réplica generalizada de un esquema de asesoría típico: se paga Modalidad 40 con un préstamo, se liquida con el AFORE + pensión retroactiva, y el remanente se descuenta de la nueva pensión. <strong>Ajusta las tasas del panel izquierdo</strong> a tu caso real.</p>
   <table class="breakdown">
     <tr><th>Concepto</th><th class="num">Monto</th></tr>
-    <tr><td>Pago aproximado al IMSS (cuotas Modalidad 40) <span title="Estimado como salario declarado × tasa × meses. El IMSS cobra ramos adicionales (enfermedad, invalidez y vida) y la tasa sube cada año, así que tu recibo real puede ser mayor. Confírmalo con tu línea de captura del IMSS.">ⓘ</span></td><td class="num">${fmt(pagoIMSS)}</td></tr>
-    <tr><td>Pago semanas descontadas / recuperación</td><td class="num">${fmt(semanasDescontadas)}</td></tr>
-    <tr><td>Monto del préstamo</td><td class="num">${fmt(montoPrestamo)}</td></tr>
-    <tr><td>Análisis de riesgo</td><td class="num">${fmt(analisisRiesgo)}</td></tr>
-    <tr><td>Seguro del proyecto (${pctSeguro}%)</td><td class="num">${fmt(seguroProyecto)}</td></tr>
-    <tr><td>Intereses financiados (${pctInteres}%)</td><td class="num">${fmt(interesesFinanciados)}</td></tr>
-    <tr><td>Honorarios de asesoría</td><td class="num">${fmt(honorarios)}</td></tr>
-    <tr class="total"><td>Total a liquidar</td><td class="num">${fmt(totalLiquidar)}</td></tr>
-    <tr><td>Saldo AFORE disponible</td><td class="num">${fmt(montoAfore)}</td></tr>
-    <tr><td>Pensión retroactiva (${ctx.mesesRetro||document.getElementById('mesesRetro').value} meses)</td><td class="num">${fmt(pensionRetroactiva)}</td></tr>
-    <tr><td>Total recursos disponibles</td><td class="num">${fmt(montoRecibido)}</td></tr>
-    <tr><td>Financiamiento externo requerido</td><td class="num">${fmt(financiamientoExterno)}</td></tr>
-    <tr class="${saldoNeto>=0?'positive':'negative'}"><td>Saldo neto a favor del cliente</td><td class="num">${fmt(saldoNeto)}</td></tr>
+    <tr><td>Pago IMSS &mdash; semanas completadas (${Math.round(f.semanasCompletadas)} × ${fmt(f.aportacionCompletada)} de aportación) <span title="Cuota del IMSS sobre la diferencia entre el salario ya registrado y el objetivo, para las semanas que ya estaban pagadas.">ⓘ</span></td><td class="num">${fmt(f.pagoCompletadas)}</td></tr>
+    <tr><td>Pago IMSS &mdash; semanas nuevas (${Math.round(f.semanasNuevasM40)} × ${fmt(f.salarioM40)} completo) <span title="Cuota del IMSS sobre el salario completo, para las semanas nuevas que no tenían nada registrado antes.">ⓘ</span></td><td class="num">${fmt(f.pagoNuevas)}</td></tr>
+    <tr><td>Otros costos que la financiera considere</td><td class="num">${fmt(f.otros)}</td></tr>
+    <tr class="total"><td>Monto del préstamo</td><td class="num">${fmt(f.montoPrestamo)}</td></tr>
+    <tr><td>Análisis de riesgo</td><td class="num">${fmt(f.analisisRiesgo)}</td></tr>
+    <tr><td>Seguro del proyecto (${f.pctSeguro}%)</td><td class="num">${fmt(f.seguroProyecto)}</td></tr>
+    <tr><td>Intereses financiados (${f.pctInteres}%)</td><td class="num">${fmt(f.interesesFinanciados)}</td></tr>
+    <tr><td>Honorarios de asesoría</td><td class="num">${fmt(f.honorarios)}</td></tr>
+    <tr class="total"><td>Total a liquidar</td><td class="num">${fmt(f.totalLiquidar)}</td></tr>
+    <tr><td>Saldo AFORE disponible</td><td class="num">${fmt(f.montoAfore)}</td></tr>
+    <tr><td>Pensión retroactiva (${f.mesesRetro} meses)</td><td class="num">${fmt(f.pensionRetroactiva)}</td></tr>
+    <tr><td>Total recursos propios</td><td class="num">${fmt(f.recursosPropios)}</td></tr>
+    <tr><td>Financiamiento externo requerido</td><td class="num">${fmt(f.financiamientoExterno)}</td></tr>
+    <tr><td>Monto por recibir (recursos propios + financiamiento)</td><td class="num">${fmt(f.montoPorRecibir)}</td></tr>
+    <tr class="${f.saldoNeto>=0?'positive':'negative'}"><td>Saldo neto a favor del cliente</td><td class="num">${fmt(f.saldoNeto)}</td></tr>
   </table>
   <div class="stat-row" style="margin-top:16px;">
     <div class="stat-tile">
-      <div class="label">Descuento mensual estimado (${plazoMeses} meses)</div>
-      <div class="value" style="font-size:1.2rem;">${fmt(descuentoMensual)}</div>
+      <div class="label">Descuento mensual estimado (${f.plazoMeses} meses)</div>
+      <div class="value" style="font-size:1.2rem;">${fmt(f.descuentoMensual)}</div>
     </div>
     <div class="stat-tile">
       <div class="label">Pensión libre mensual (mientras dure el descuento)</div>
-      <div class="value" style="font-size:1.2rem;">${fmt(pensionLibreInicial)}</div>
+      <div class="value" style="font-size:1.2rem;">${fmt(f.pensionLibreInicial)}</div>
     </div>
   </div>
-  <p class="note">${mesesRecuperacion? 'Tiempo estimado para recuperar el financiamiento externo vía el incremento de pensión: <strong>'+mesesRecuperacion.toFixed(1)+' meses</strong>.' : ''}</p>
+  <p class="note">${f.mesesRecuperacion? 'Tiempo estimado para recuperar el financiamiento externo vía el incremento de pensión: <strong>'+f.mesesRecuperacion.toFixed(1)+' meses</strong>.' : ''}</p>
   `;
 }
 
-let tituloOriginal = document.title;
-window.addEventListener('beforeprint', ()=>{
-  // Abre todos los detalles colapsados para que se vean en el PDF/impresión
-  document.querySelectorAll('#resultados details').forEach(d => d.open = true);
-  tituloOriginal = document.title;
-  const nombre = (document.getElementById('nombreCliente')?.value||'').trim();
-  const fecha = new Date().toISOString().slice(0,10);
-  // El nombre sugerido de archivo al "Guardar como PDF" suele tomarse del <title>
-  document.title = 'Simulacion Pension' + (nombre? ' - '+nombre.replace(/[^\p{L}\p{N}\s-]/gu,'').trim() : '') + ' - ' + fecha;
-});
-window.addEventListener('afterprint', ()=>{ document.title = tituloOriginal; });
-
-function prepararImpresion(){
+// ---------- Descargar como PDF ----------
+// Usa el diálogo de impresión del navegador; el CSS de @media print oculta el
+// panel de captura y los botones, y muestra solo el encabezado + resultados.
+function descargarPDF(){
   window.print();
 }
 
+// ---------- Botón CONSULTA ----------
+// Abre un chat de WhatsApp directo al número del asesor (fijo), con un mensaje
+// ya redactado pidiendo una consulta sobre el análisis de la pensión.
+function enviarConsulta(){
+  const r = window._ultimoResultado;
+  if(!r) return;
+  const numeroAsesor = '529988307123'; // +52 998 830 7123
+
+  let msg = `Hola, quiero una consulta sobre el análisis de mi pensión`;
+  if(r.nombre) msg += ` de ${r.nombre}`;
+  msg += `.\n\n`;
+  msg += `Pensión SIN Modalidad 40: ${fmt(r.sinVal)}/mes${r.resSin.tocoPMG?' (mínima garantizada)':''}\n`;
+  if(r.conVal!==null){
+    const delta = r.conVal - r.sinVal;
+    const deltaPct = r.sinVal>0? (delta/r.sinVal*100):0;
+    msg += `Pensión CON Modalidad 40: ${fmt(r.conVal)}/mes${r.resCon.tocoPMG?' (mínima garantizada)':''}\n`;
+    msg += `Incremento: +${fmt(delta)}/mes (+${deltaPct.toFixed(0)}%)\n`;
+  }
+  msg += `\n¿Podemos platicar sobre un análisis más completo de mi caso?`;
+
+  const url = 'https://wa.me/' + numeroAsesor + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
 // Cálculo inicial de ejemplo al cargar
-window.addEventListener('DOMContentLoaded', ()=>{ actualizarM40Preview(); calcular(); });
+window.addEventListener('DOMContentLoaded', ()=>{ actualizarFechasPreview(); calcular(); });
 </script>
 </body>
 </html>
